@@ -3,6 +3,9 @@
 
 You've totally heard of meshtastic[https://meshtastic.org/] , right?
 
+
+TLDR; I made a radio system out of garbage, E32 modules, and old single board computers, because the internet went out.
+
 the pre-project:
 
 A while back (Months prior) I had gained another interest in trying to setup a meshtastic network in my town. 
@@ -29,5 +32,6 @@ speeds. NAK retransmission, an established handshake system, a wireless terminal
 The issue was: the base was constructed out of crayon box packages. The handheld was constructed out of various cardboard, packing materials, and a ton of scotch tape.
 They work, but they're REALLY ugly. I do not have a 3D printer. My friend has an Ender 3 I can use, but he was out of town for work for an extended period, so I never got the chance to really come up with 
 any 3D designs. It was just improvisation. 
+
 
 And as such, you have Wacknet V1. And I need funding for V2. Bleh. Hope this is cool. There's a really long youtube video on the Hack Club page.
