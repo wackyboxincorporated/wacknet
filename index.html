@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WackNet Terminal Gateway</title>
+    <style>
+        :root {
+            --bg-base: #101216;       /* Desktop background */
+            --bg-card: #20222a;       /* Window background */
+            --bg-sunken: #0c0e12;     /* Textarea & fields background */
+            --border-light: #4c5264;  /* Bevel top-left */
+            --border-dark: #07080a;   /* Bevel bottom-right */
+            
+            --text-primary: #ffffff;
+            --text-secondary: #a0a6b5;
+            --text-muted: #585d6b;
+            
+            --win-blue: #1e3a8a;      /* Navy title bar active */
+            --win-blue-light: #3b82f6;
+            
+            --accent-cyan: #38bdf8;
+            --accent-yellow: #fbbf24;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+        }
+
+        body {
+            font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Tahoma, Arial, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 16px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+        }
+
+        .wrapper {
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Classic beveled window panel */
+        .win-window {
+            background-color: var(--bg-card);
+            border: 2px solid;
+            border-top-color: var(--border-light);
+            border-left-color: var(--border-light);
+            border-right-color: var(--border-dark);
+            border-bottom-color: var(--border-dark);
+            padding: 2px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: none;
+        }
+
+        /* Title bar */
+        .win-titlebar {
+            background-color: var(--win-blue);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 0.5px;
+        }
+
+        .win-titlebar-btn {
+            background-color: var(--bg-card);
+            border: 1px solid;
+            border-top-color: var(--border-light);
+            border-left-color: var(--border-light);
+            border-right-color: var(--border-dark);
+            border-bottom-color: var(--border-dark);
+            color: var(--text-primary);
+            font-size: 9px;
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .win-titlebar-btn:active {
+            border-top-color: var(--border-dark);
+            border-left-color: var(--border-dark);
+            border-right-color: var(--border-light);
+            border-bottom-color: var(--border-light);
+        }
+
+        .win-content {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Sunken block for output fields */
+        .win-sunken {
+            background-color: var(--bg-sunken);
+            border: 2px solid;
+            border-top-color: var(--border-dark);
+            border-left-color: var(--border-dark);
+            border-right-color: var(--border-light);
+            border-bottom-color: var(--border-light);
+            color: #ffffff;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        /* Button style */
+        .win-btn {
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            border: 2px solid;
+            border-top-color: var(--border-light);
+            border-left-color: var(--border-light);
+            border-right-color: var(--border-dark);
+            border-bottom-color: var(--border-dark);
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .win-btn:active:not(:disabled) {
+            border-top-color: var(--border-dark);
+            border-left-color: var(--border-dark);
+            border-right-color: var(--border-light);
+            border-bottom-color: var(--border-light);
+        }
+
+        .win-btn:disabled {
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        /* Dropdowns and inputs */
+        .win-input {
+            background-color: var(--bg-sunken);
+            color: var(--text-primary);
+            border: 2px solid;
+            border-top-color: var(--border-dark);
+            border-left-color: var(--border-dark);
+            border-right-color: var(--border-light);
+            border-bottom-color: var(--border-light);
+            font-family: inherit;
+            font-size: 11px;
+            padding: 3px 6px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        /* Layout Grid */
+        .grid-half {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Control row */
+        .control-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .label-val {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .value-text {
+            font-family: "Courier New", Courier, monospace;
+            color: var(--accent-cyan);
+        }
+
+        /* Range sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-sunken);
+            outline: none;
+            border: 1px solid var(--border-light);
+            margin: 6px 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 18px;
+            background: var(--bg-card);
+            border: 1px solid;
+            border-top-color: var(--border-light);
+            border-left-color: var(--border-light);
+            border-right-color: var(--border-dark);
+            border-bottom-color: var(--border-dark);
+            cursor: pointer;
+        }
+
+        /* Stepper elements */
+        .stepper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            background-color: var(--bg-sunken);
+            border: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: var(--text-muted);
+        }
+
+        .step-label {
+            font-size: 9px;
+            font-weight: bold;
+            margin-top: 4px;
+            color: var(--text-muted);
+        }
+
+        .step-connector {
+            flex-grow: 1;
+            height: 2px;
+            background-color: var(--border-light);
+            margin-bottom: 12px;
+        }
+
+        /* Stepper states */
+        .step.active .step-icon {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            background-color: var(--win-blue);
+        }
+        .step.active .step-label {
+            color: var(--accent-cyan);
+        }
+
+        .step.completed .step-icon {
+            background-color: var(--accent-green);
+            color: #000000;
+            border-color: var(--accent-green);
+        }
+        .step.completed .step-label {
+            color: var(--accent-green);
+        }
+
+        .step.completed + .step-connector {
+            background-color: var(--accent-green);
+        }
+
+        .step.failed .step-icon {
+            background-color: var(--accent-red);
+            color: #ffffff;
+            border-color: var(--accent-red);
+        }
+        .step.failed .step-label {
+            color: var(--accent-red);
+        }
+
+        /* Logs and Terminals */
+        .terminal-box {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 11px;
+            height: 160px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .term-line {
+            display: flex;
+            gap: 6px;
+            line-height: 1.3;
+        }
+
+        .time-lbl { color: var(--text-muted); }
+        .dir-lbl { font-weight: bold; width: 20px; }
+        .dir-TX { color: var(--accent-yellow); }
+        .dir-RX { color: var(--accent-cyan); }
+        .type-HANDSHAKE { color: var(--accent-yellow); }
+        .type-TEXT { color: #818cf8; }
+        .type-PING { color: #f43f5e; }
+        .type-PONG { color: #ec4899; }
+        .type-ERR { color: var(--accent-red); font-weight: bold; }
+        .hex-data { color: var(--text-secondary); word-break: break-all; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 2px;
+        }
+
+        .tab-btn {
+            background-color: var(--bg-card);
+            border: 1px solid;
+            border-top-color: var(--border-light);
+            border-left-color: var(--border-light);
+            border-right-color: var(--border-dark);
+            border-bottom-color: var(--border-dark);
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 8px;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background-color: var(--win-blue);
+            color: #ffffff;
+            border-color: var(--win-blue);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Main Window -->
+        <div class="win-window">
+            <div class="win-titlebar">
+                <span id="titleLabel">WackNet Gateway Base Terminal</span>
+                <span class="win-titlebar-btn" onclick="fetchConfig()">?</span>
+            </div>
+            
+            <div class="win-content">
+                <!-- Status Bar -->
+                <div class="win-sunken" style="display: flex; justify-content: space-between; font-size: 11px; padding: 4px 8px; align-items: center;">
+                    <div>Link Type: <span id="linkTypeVal" style="font-weight: bold;">Hardware</span></div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span>Battery:</span>
+                        <div style="width: 60px; height: 10px; border: 1px solid var(--border-dark); background: var(--bg-sunken); position: relative; border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle;">
+                            <div id="batteryFill" style="width: 100%; height: 100%; background-color: var(--accent-green); transition: width 0.3s ease, background-color 0.3s ease;"></div>
+                        </div>
+                        <span id="batteryPercentVal" style="font-weight: bold;">100.0%</span>
+                        <button class="win-btn" id="btnResetBattery" onclick="resetBatteryCharge()" style="padding: 1px 4px; font-size: 9px; margin-left: 4px; line-height: 1; min-height: unset; height: 14px; vertical-align: middle;">Reset</button>
+                    </div>
+                    <div>Status: <span id="linkStatusVal" style="font-weight: bold; color: var(--accent-green);">ONLINE</span></div>
+                </div>
+
+                <div class="grid-half">
+                    <!-- Config Box -->
+                    <div class="win-window">
+                        <div class="win-titlebar"><span>Configuration</span></div>
+                        <div class="win-content">
+                            <div class="control-row">
+                                <div class="label-val">
+                                    <span>Tx Frame Delay</span>
+                                    <span id="delayVal" class="value-text">50 ms</span>
+                                </div>
+                                <input type="range" id="delaySlider" min="10" max="1000" step="5" value="50" oninput="updateConfig()">
+                            </div>
+                            
+                            <div class="control-row" style="margin-top: 6px;">
+                                <div class="label-val">
+                                    <span>Air Data Rate</span>
+                                </div>
+                                <select id="rateSelect" class="win-input" onchange="changeAirRate()">
+                                    <option value="0.3">ESGTST (0.3 kbps)</option>
+                                    <option value="2.4">2.4 kbps (Max Range)</option>
+                                    <option value="9.6">9.6 kbps (Medium Speed)</option>
+                                    <option value="19.2">19.2 kbps (High Speed)</option>
+                                </select>
+                            </div>
+
+                            <div class="control-row" style="margin-top: 6px;">
+                                <div class="label-val">
+                                    <span>Radio Channel</span>
+                                    <span id="channelVal" class="value-text">15 (425 MHz)</span>
+                                </div>
+                                <input type="range" id="channelSlider" min="0" max="31" step="1" value="15" oninput="updateConfig()">
+                            </div>
+
+                            <div class="control-row" style="margin-top: 6px;">
+                                <div class="label-val">
+                                    <span>Transmit Power</span>
+                                </div>
+                                <select id="powerSelect" class="win-input" onchange="updateConfig()">
+                                    <option value="0">Max Power</option>
+                                    <option value="1">Med-High Power</option>
+                                    <option value="2">Med-Low Power</option>
+                                    <option value="3">Min Power</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Radio Module Info Box -->
+                    <div class="win-window" style="margin-top: 12px;">
+                        <div class="win-titlebar"><span>Radio Module Info</span></div>
+                        <div class="win-content">
+                            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 10px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Model/Status:</span>
+                                    <span id="radioStatusVal" style="font-weight: bold; color: var(--accent-red);">Unchecked</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Firmware Rate:</span>
+                                    <span id="radioRateVal" class="value-text">--</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Firmware Channel:</span>
+                                    <span id="radioChannelVal" class="value-text">--</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Firmware Power:</span>
+                                    <span id="radioPowerVal" class="value-text">--</span>
+                                </div>
+                                <button class="win-btn" id="btnPollRadio" onclick="pollRadioConfig()" style="margin-top: 4px; width: 100%;">Poll Attached Radio</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diagnostics & WiFi -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- Diagnostics Box -->
+                        <div class="win-window">
+                            <div class="win-titlebar"><span>Diagnostics</span></div>
+                            <div class="win-content">
+                                <div style="display: flex; justify-content: space-around; margin-bottom: 6px;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 9px; font-weight: bold; color: var(--text-secondary);">RTT</div>
+                                        <div id="pingRtt" class="value-text" style="font-size: 14px; font-weight: bold;">--</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 9px; font-weight: bold; color: var(--text-secondary);">LOSS RATE</div>
+                                        <div id="pingLoss" class="value-text" style="font-size: 14px; font-weight: bold; color: var(--accent-red)">--</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 6px;">
+                                    <button class="win-btn" style="flex: 1;" onclick="runDiagnostics(1)">Ping</button>
+                                    <button class="win-btn" style="flex: 1;" onclick="runDiagnostics(5)">Burst</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- WiFi Box -->
+                        <div class="win-window">
+                            <div class="win-titlebar"><span>WiFi Settings</span></div>
+                            <div class="win-content">
+                                <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                                    <button class="win-btn" onclick="scanWifi()" id="btnWifiScan">Scan Networks</button>
+                                    <span id="wifiStatus" style="font-size: 10px; font-weight: bold; align-self: center; color: var(--text-muted)">Idle</span>
+                                </div>
+                                <div id="wifiList" class="win-sunken" style="height: 60px; overflow-y: auto; font-size: 10px;">
+                                    <div style="color: var(--text-muted); text-align: center; padding-top: 15px;">No networks scanned.</div>
+                                </div>
+                                <div id="wifiConnectForm" style="display: none; flex-direction: column; gap: 4px; margin-top: 4px;">
+                                    <div style="font-size: 10px; font-weight: bold;">SSID: <span id="selectedSsid" class="value-text"></span></div>
+                                    <div class="input-group">
+                                        <input type="password" id="wifiPassword" placeholder="Password" class="win-input" style="flex: 2;">
+                                        <button class="win-btn" onclick="connectWifi()" style="flex: 1;">Connect</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Handshake Stepper -->
+                <div class="win-window">
+                    <div class="win-titlebar"><span>Handshake Pipeline Visualizer</span></div>
+                    <div class="win-content">
+                        <div class="stepper" id="handshakeStepper">
+                            <div class="step" id="step-1"><div class="step-icon">1</div><div class="step-label">SYN</div></div>
+                            <div class="step-connector"></div>
+                            <div class="step" id="step-2"><div class="step-icon">2</div><div class="step-label">SYN-ACK</div></div>
+                            <div class="step-connector"></div>
+                            <div class="step" id="step-3"><div class="step-icon">3</div><div class="step-label">ESTABLISH</div></div>
+                            <div class="step-connector"></div>
+                            <div class="step" id="step-4"><div class="step-icon">4</div><div class="step-label">DATA</div></div>
+                            <div class="step-connector"></div>
+                            <div class="step" id="step-5"><div class="step-icon">5</div><div class="step-label">FIN</div></div>
+                            <div class="step-connector"></div>
+                            <div class="step" id="step-6"><div class="step-icon">6</div><div class="step-label">CONFIRM</div></div>
+                        </div>
+                        <div class="win-sunken" style="display: flex; justify-content: space-between; font-size: 10px; padding: 4px 8px;">
+                            <div>State: <span id="stepperState" style="font-weight: bold;">IDLE</span></div>
+                            <div id="stepperProgress" style="font-family: monospace;">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Terminal -->
+                <div class="win-window">
+                    <div class="win-titlebar"><span>Message Terminal</span></div>
+                    <div class="win-content">
+                        <div id="messageBox" class="win-sunken" style="height: 120px; overflow-y: auto; font-family: monospace; font-size: 11px; padding: 6px;">
+                            <div style="color: var(--text-muted);">Awaiting text frames...</div>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="textInput" placeholder="Type text to transmit..." class="win-input" style="flex: 1;" onkeydown="if(event.key==='Enter') sendText()">
+                            <button class="win-btn" onclick="sendText()">Transmit</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Telemetry Logs -->
+                <div class="win-window">
+                    <div class="win-titlebar"><span>Raw Telemetry Logs</span></div>
+                    <div class="win-content" style="gap: 2px;">
+                        <div class="tabs">
+                            <button class="tab-btn active" id="tab-all" onclick="setTelemetryFilter('ALL')">All</button>
+                            <button class="tab-btn" id="tab-hs" onclick="setTelemetryFilter('HANDSHAKE')">Handshakes</button>
+                            <button class="tab-btn" id="tab-data" onclick="setTelemetryFilter('DATA')">Data</button>
+                            <button class="tab-btn" id="tab-ping" onclick="setTelemetryFilter('PING')">Pings</button>
+                        </div>
+                        <div id="terminalLogs" class="win-sunken terminal-box">
+                            <div style="color: var(--text-muted); padding: 6px;">Awaiting telemetry frames...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFilter = 'ALL';
+        let isHandshaking = false;
+        let diagnosticRunning = false;
+        let telemetryRing = [];
+
+        function fetchConfig() {
+            fetch('/api/config').then(r => r.json()).then(conf => {
+                document.getElementById('delaySlider').value = conf.tx_delay;
+                document.getElementById('delayVal').innerText = conf.tx_delay + " ms";
+                
+                if (conf.air_rate) {
+                    document.getElementById('rateSelect').value = conf.air_rate;
+                    const delaySlider = document.getElementById('delaySlider');
+                    if (conf.air_rate == 0.3) {
+                        delaySlider.min = 200; delaySlider.max = 2000;
+                    } else if (conf.air_rate == 2.4) {
+                        delaySlider.min = 40; delaySlider.max = 500;
+                    } else if (conf.air_rate == 9.6) {
+                        delaySlider.min = 15; delaySlider.max = 250;
+                    } else if (conf.air_rate == 19.2) {
+                        delaySlider.min = 8; delaySlider.max = 150;
+                    }
+                }
+
+                if (conf.channel !== undefined) {
+                    document.getElementById('channelSlider').value = conf.channel;
+                    document.getElementById('channelVal').innerText = conf.channel + " (" + (410 + parseInt(conf.channel)) + " MHz)";
+                }
+                if (conf.tx_power !== undefined) {
+                    document.getElementById('powerSelect').value = conf.tx_power;
+                }
+                
+                const linkTypeVal = document.getElementById('linkTypeVal');
+                if (conf.simulation_mode) {
+                    linkTypeVal.innerText = "Simulator";
+                } else {
+                    linkTypeVal.innerText = "Hardware Bridge";
+                }
+            });
+        }
+
+        function updateConfig() {
+            const delay = document.getElementById('delaySlider').value;
+            document.getElementById('delayVal').innerText = delay + " ms";
+            let body = `tx_delay=${delay}`;
+            
+            const rateSelect = document.getElementById('rateSelect');
+            if (rateSelect) body += `&air_rate=${rateSelect.value}`;
+
+            const channelSlider = document.getElementById('channelSlider');
+            if (channelSlider) {
+                const channel = channelSlider.value;
+                document.getElementById('channelVal').innerText = channel + " (" + (410 + parseInt(channel)) + " MHz)";
+                body += `&channel=${channel}`;
+            }
+
+            const powerSelect = document.getElementById('powerSelect');
+            if (powerSelect) body += `&tx_power=${powerSelect.value}`;
+
+            fetch('/api/config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: body
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'failed') {
+                    fetchConfig();
+                }
+            });
+        }
+
+        function changeAirRate() {
+            const rate = document.getElementById('rateSelect').value;
+            const delaySlider = document.getElementById('delaySlider');
+            
+            if (rate === "0.3") {
+                delaySlider.min = 200; delaySlider.max = 2000;
+                delaySlider.value = Math.max(200, Math.min(delaySlider.value, 2000));
+            } else if (rate === "2.4") {
+                delaySlider.min = 40; delaySlider.max = 500;
+                delaySlider.value = Math.max(40, Math.min(delaySlider.value, 500));
+            } else if (rate === "9.6") {
+                delaySlider.min = 15; delaySlider.max = 250;
+                delaySlider.value = Math.max(15, Math.min(delaySlider.value, 250));
+            } else if (rate === "19.2") {
+                delaySlider.min = 8; delaySlider.max = 150;
+                delaySlider.value = Math.max(8, Math.min(delaySlider.value, 150));
+            }
+            
+            document.getElementById('delayVal').innerText = delaySlider.value + " ms";
+            updateConfig();
+        }
+
+        function resetStepper() {
+            for (let i = 1; i <= 6; i++) {
+                document.getElementById(`step-${i}`).className = 'step';
+            }
+            document.getElementById('stepperProgress').innerText = '--';
+        }
+
+        function setStepperStage(stage, status, progress = '', errorMsg = '') {
+            resetStepper();
+            const stateEl = document.getElementById('stepperState');
+            if (status === 'success') {
+                for (let i = 1; i <= 6; i++) {
+                    document.getElementById(`step-${i}`).className = 'step completed';
+                }
+                stateEl.innerText = "SUCCESS";
+                stateEl.style.color = "var(--accent-green)";
+                document.getElementById('stepperProgress').innerText = '100%';
+                return;
+            }
+
+            if (status === 'failed') {
+                const failedStage = Math.max(1, Math.min(6, stage));
+                for (let i = 1; i < failedStage; i++) {
+                    document.getElementById(`step-${i}`).className = 'step completed';
+                }
+                document.getElementById(`step-${failedStage}`).className = 'step failed';
+                stateEl.innerText = errorMsg || "FAILED";
+                stateEl.style.color = "var(--accent-red)";
+                return;
+            }
+
+            stateEl.style.color = "var(--text-primary)";
+            stateEl.innerText = status.replace(/_/g, ' ').toUpperCase();
+            
+            const activeStage = Math.max(1, Math.min(6, stage));
+            for (let i = 1; i < activeStage; i++) {
+                document.getElementById(`step-${i}`).className = 'step completed';
+            }
+            document.getElementById(`step-${activeStage}`).className = 'step active';
+            
+            if (progress) {
+                document.getElementById('stepperProgress').innerText = progress;
+            }
+        }
+
+        function pollHandshake() {
+            if (!isHandshaking) return;
+            fetch('/api/handshake_status').then(r => r.json()).then(state => {
+                if (!state) return;
+                let progress = '';
+                if (state.stage === 4) {
+                    progress = `${state.sent_chunks}/${state.total_chunks}`;
+                }
+                setStepperStage(state.stage, state.status, progress, state.error);
+                if (state.status === 'success' || state.status === 'failed') {
+                    isHandshaking = false;
+                } else {
+                    setTimeout(pollHandshake, 150);
+                }
+            }).catch(() => {
+                isHandshaking = false;
+            });
+        }
+
+        async function runDiagnostics(count) {
+            if (diagnosticRunning) return;
+            diagnosticRunning = true;
+            document.getElementById('pingRtt').innerText = '...';
+            document.getElementById('pingLoss').innerText = '...';
+            
+            let success = 0;
+            let sumRtt = 0;
+            
+            for (let i = 0; i < count; i++) {
+                try {
+                    const r = await fetch('/api/ping', {method: 'POST'});
+                    const data = await r.json();
+                    if (data.status === 'success') {
+                        success++;
+                        sumRtt += data.rtt;
+                        document.getElementById('pingRtt').innerText = data.rtt + ' ms';
+                    } else {
+                        document.getElementById('pingRtt').innerText = 'Timeout';
+                    }
+                } catch {
+                    document.getElementById('pingRtt').innerText = 'ERR';
+                }
+                if (i < count - 1) await new Promise(res => setTimeout(res, 250));
+            }
+            
+            const lossRate = Math.round(((count - success) / count) * 100);
+            document.getElementById('pingLoss').innerText = lossRate + '%';
+            if (success > 0) {
+                document.getElementById('pingRtt').innerText = Math.round(sumRtt / success) + ' ms';
+            } else {
+                document.getElementById('pingRtt').innerText = '--';
+            }
+            diagnosticRunning = false;
+        }
+
+        function sendText() {
+            const input = document.getElementById('textInput');
+            const val = input.value.trim();
+            if (!val || isHandshaking) return;
+            
+            isHandshaking = true;
+            resetStepper();
+            setStepperStage(1, "initiating");
+            
+            const delay = document.getElementById('delaySlider').value;
+            fetch('/api/send', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `data=${encodeURIComponent(btoa(val))}&delay=${delay}`
+            });
+            
+            input.value = '';
+            setTimeout(pollHandshake, 100);
+        }
+
+        function setTelemetryFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${filter === 'ALL' ? 'all' : filter === 'HANDSHAKE' ? 'hs' : filter.toLowerCase()}`).classList.add('active');
+            renderTelemetry();
+        }
+
+        function renderTelemetry() {
+            const container = document.getElementById('terminalLogs');
+            if (telemetryRing.length === 0) {
+                container.innerHTML = `<div style="color: var(--text-muted); padding: 6px;">Awaiting telemetry frames...</div>`;
+                return;
+            }
+            
+            container.innerHTML = '';
+            const filtered = telemetryRing.filter(item => {
+                if (currentFilter === 'ALL') return true;
+                if (currentFilter === 'HANDSHAKE') return item.type === 'HANDSHAKE';
+                if (currentFilter === 'DATA') return item.type === 'TEXT' || item.type.startsWith('CMD');
+                if (currentFilter === 'PING') return item.type === 'PING' || item.type === 'PONG';
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div style="color: var(--text-muted); padding: 6px;">No matching frames.</div>`;
+                return;
+            }
+            
+            filtered.forEach(item => {
+                const date = new Date(item.timestamp);
+                const timeStr = date.toTimeString().split(' ')[0] + '.' + String(date.getMilliseconds()).padStart(3, '0');
+                const line = document.createElement('div');
+                line.className = 'term-line';
+                line.style.padding = '2px 6px';
+                line.innerHTML = `
+                    <span class="time-lbl">${timeStr}</span>
+                    <span class="dir-lbl dir-${item.direction}">${item.direction}</span>
+                    <span class="type-lbl type-${item.type}">${item.type.padEnd(9)}</span>
+                    <span class="hex-data">[ID:${String(item.payload_id).padStart(6)}] [CH:${String(item.index).padStart(3)}/${String(item.count).padStart(3)}] <span>${item.hex.substring(0,24)}...${item.hex.slice(-8)}</span></span>
+                `;
+                container.appendChild(line);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function pollTelemetry() {
+            fetch('/api/log').then(r => r.json()).then(frames => {
+                if (frames && frames.length > 0) {
+                    telemetryRing = frames;
+                    renderTelemetry();
+                }
+            }).finally(() => setTimeout(pollTelemetry, 600));
+        }
+        
+        function pollMessages() {
+            fetch('/api/messages').then(r => r.json()).then(msgs => {
+                if (msgs && msgs.length > 0) {
+                    const msgBox = document.getElementById('messageBox');
+                    msgs.forEach(msg => {
+                        if (msg.type === 0x00) {
+                            if (msgBox.innerHTML.includes("Awaiting text")) {
+                                msgBox.innerHTML = '';
+                            }
+                            const date = new Date(msg.timestamp);
+                            const tStr = date.toTimeString().split(' ')[0];
+                            msgBox.innerHTML += `<div style="margin-bottom: 2px;"><span style="color: var(--accent-cyan); font-weight:bold">[${tStr}]</span> ${msg.data}</div>`;
+                            msgBox.scrollTop = msgBox.scrollHeight;
+                        }
+                    });
+                }
+            }).finally(() => setTimeout(pollMessages, 800));
+        }
+
+        function pollBattery() {
+            fetch('/api/battery').then(r => r.json()).then(data => {
+                if (data && typeof data.percentage === 'number') {
+                    const pct = data.percentage;
+                    const valSpan = document.getElementById('batteryPercentVal');
+                    const fillDiv = document.getElementById('batteryFill');
+                    
+                    valSpan.innerText = pct.toFixed(1) + '%';
+                    fillDiv.style.width = pct + '%';
+                    
+                    // Set color based on percentage
+                    let color = '#34d399'; // default accent-green
+                    if (pct < 20) {
+                        color = '#f87171'; // accent-red
+                    } else if (pct < 50) {
+                        color = '#fbbf24'; // accent-yellow
+                    }
+                    
+                    fillDiv.style.backgroundColor = color;
+                    
+                    // Visual feedback for heavy TX mode (active heavy energy draw)
+                    if (data.heavy_tx) {
+                        fillDiv.style.opacity = (Math.floor(Date.now() / 300) % 2 === 0) ? '0.5' : '1.0';
+                        valSpan.style.color = 'var(--accent-yellow)';
+                    } else {
+                        fillDiv.style.opacity = '1.0';
+                        valSpan.style.color = '';
+                    }
+                }
+            }).catch(err => {
+                console.error("Error polling battery status:", err);
+            }).finally(() => setTimeout(pollBattery, 1000));
+        }
+
+        function resetBatteryCharge() {
+            if (confirm("Reset battery charge back to 100%?")) {
+                fetch('/api/battery/reset', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.status === 'success') {
+                            alert("Battery charge reset to 100%!");
+                            // Immediately fetch state to update UI
+                            fetch('/api/battery').then(r => r.json()).then(newData => {
+                                if (newData && typeof newData.percentage === 'number') {
+                                    document.getElementById('batteryPercentVal').innerText = newData.percentage.toFixed(1) + '%';
+                                    document.getElementById('batteryFill').style.width = newData.percentage + '%';
+                                    document.getElementById('batteryFill').style.backgroundColor = '#34d399';
+                                }
+                            });
+                        } else {
+                            alert("Failed to reset battery charge.");
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Error resetting battery:", err);
+                        alert("Error resetting battery: " + err);
+                    });
+            }
+        }
+
+        function scanWifi() {
+            const btn = document.getElementById('btnWifiScan');
+            const status = document.getElementById('wifiStatus');
+            const list = document.getElementById('wifiList');
+            const form = document.getElementById('wifiConnectForm');
+            
+            btn.disabled = true;
+            status.innerText = "Scanning...";
+            status.style.color = "var(--accent-yellow)";
+            
+            fetch('/api/wifi/scan')
+                .then(r => r.json())
+                .then(networks => {
+                    list.innerHTML = '';
+                    if (networks.length === 0) {
+                        list.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding-top: 15px;">No networks found.</div>`;
+                    } else {
+                        networks.forEach(net => {
+                            const row = document.createElement('div');
+                            row.style.cssText = "display: flex; justify-content: space-between; padding: 4px 6px; cursor: pointer; border-bottom: 1px solid var(--border-dark);";
+                            row.onmouseover = () => row.style.backgroundColor = "var(--win-blue)";
+                            row.onmouseout = () => row.style.backgroundColor = "transparent";
+                            row.onclick = () => {
+                                document.getElementById('selectedSsid').innerText = net.ssid;
+                                form.style.display = "flex";
+                                document.getElementById('wifiPassword').value = '';
+                                document.getElementById('wifiPassword').focus();
+                            };
+                            row.innerHTML = `<span>${net.ssid}</span><span>${net.signal}% [${net.security || 'Open'}]</span>`;
+                            list.appendChild(row);
+                        });
+                    }
+                    status.innerText = "Scan complete";
+                    status.style.color = "var(--accent-green)";
+                })
+                .catch(() => {
+                    status.innerText = "Scan error";
+                    status.style.color = "var(--accent-red)";
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                });
+        }
+        
+        function connectWifi() {
+            const ssid = document.getElementById('selectedSsid').innerText;
+            const password = document.getElementById('wifiPassword').value;
+            const status = document.getElementById('wifiStatus');
+            const form = document.getElementById('wifiConnectForm');
+            
+            status.innerText = "Connecting...";
+            status.style.color = "var(--accent-yellow)";
+            
+            fetch('/api/wifi/connect', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}`
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.status === 'success') {
+                    status.innerText = "Connected";
+                    status.style.color = "var(--accent-green)";
+                    form.style.display = "none";
+                } else {
+                    status.innerText = "Failed: " + (res.message || 'unknown');
+                    status.style.color = "var(--accent-red)";
+                }
+            })
+            .catch(() => {
+                status.innerText = "Connect error";
+                status.style.color = "var(--accent-red)";
+            });
+        }
+
+        function pollRadioConfig() {
+            const statusVal = document.getElementById('radioStatusVal');
+            const rateVal = document.getElementById('radioRateVal');
+            const channelVal = document.getElementById('radioChannelVal');
+            const powerVal = document.getElementById('radioPowerVal');
+            const btn = document.getElementById('btnPollRadio');
+            
+            btn.disabled = true;
+            statusVal.innerText = "Polling...";
+            statusVal.style.color = "var(--accent-yellow)";
+            
+            fetch('/api/radio_config')
+                .then(r => r.json())
+                .then(res => {
+                    if (res.status === 'ok') {
+                        statusVal.innerText = "ONLINE";
+                        statusVal.style.color = "var(--accent-green)";
+                        rateVal.innerText = res.config.rate + " kbps";
+                        channelVal.innerText = res.config.channel;
+                        const pwrLabels = ["Max", "Med-High", "Med-Low", "Min"];
+                        const pwr = parseInt(res.config.power);
+                        powerVal.innerText = pwrLabels[pwr] !== undefined ? pwrLabels[pwr] : res.config.power;
+                    } else {
+                        statusVal.innerText = "ERROR";
+                        statusVal.style.color = "var(--accent-red)";
+                        rateVal.innerText = "--";
+                        channelVal.innerText = "--";
+                        powerVal.innerText = "--";
+                        alert("Radio configuration poll failed: " + res.message);
+                    }
+                })
+                .catch(err => {
+                    statusVal.innerText = "ERROR";
+                    statusVal.style.color = "var(--accent-red)";
+                    rateVal.innerText = "--";
+                    channelVal.innerText = "--";
+                    powerVal.innerText = "--";
+                    alert("Radio configuration poll failed: Network error");
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                });
+        }
+
+        // Initialize
+        fetchConfig();
+        pollTelemetry();
+        pollMessages();
+        pollBattery();
+        pollRadioConfig();
+    </script>
+</body>
+</html>
